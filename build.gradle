@@ -1,0 +1,28 @@
+plugins {
+    id 'java'
+}
+
+group 'JavaUtil'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    def rxJavaVersion = '3.0.12'
+    def retrofitVersion = '2.7.1'
+    def jsoup = '1.11.3'
+
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    implementation "io.reactivex.rxjava3:rxjava:${rxJavaVersion}"
+    implementation "com.squareup.retrofit2:retrofit:${retrofitVersion}"
+    implementation "com.squareup.retrofit2:converter-gson:${retrofitVersion}"
+    implementation "com.squareup.retrofit2:converter-jackson:${retrofitVersion}"
+    implementation "com.squareup.retrofit2:converter-simplexml:${retrofitVersion}"
+    implementation "com.squareup.retrofit2:converter-scalars:${retrofitVersion}"//ConverterFactory的String依赖包
+    implementation "org.jsoup:jsoup:${jsoup}"
+}
