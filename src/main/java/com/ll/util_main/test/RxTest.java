@@ -1,6 +1,6 @@
 package com.ll.util_main.test;
 
-import com.ll.internet.interfaces.TestRetrofit;
+import com.ll.internet.interfaces.TestRxRetrofit;
 import com.ll.utils.Log;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Observable;
@@ -12,13 +12,10 @@ import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.functions.Consumer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
-import retrofit2.converter.simplexml.SimpleXmlConverterFactory;
 
 
 public class RxTest {
@@ -37,40 +34,32 @@ public class RxTest {
     private void testRxRetrofit() {
         Log.log("testRxRetrofit");
         String url = "https://ons.ooo/type/1/";
-        String url1= "https://www.baidu.com/";
+        String url1 = "https://www.baidu.com/";
         Retrofit retrofit = new Retrofit.Builder()
 //                .addConverterFactory(GsonConverterFactory.create())
 //                .addConverterFactory(SimpleXmlConverterFactory.create())
                 .addConverterFactory(ScalarsConverterFactory.create())
-                .baseUrl(url1)
+                .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
+                .baseUrl(url)
                 .build();
-        TestRetrofit service = retrofit.create(TestRetrofit.class);
-        Call<String> call = service.getData();
-        call.enqueue(new Callback<String>() {
+        TestRxRetrofit service = retrofit.create(TestRxRetrofit.class);
+        Observable<Response<String>> observable = service.getData();
+        observable.subscribe(new Consumer<Response>() {
             @Override
-            public void onResponse(Call<String> call, Response<String> response) {
+            public void accept(Response response) throws Throwable {
                 if (response != null && response.isSuccessful()) {
-                    Log.log("body:", response.body());
-                    Log.log("message:", response.message());
-                    Log.log("headers:", response.headers().toString());
-                    parse(response.body());
+                    parse(response.body().toString());
                 }
-
-            }
-
-            @Override
-            public void onFailure(Call<String> call, Throwable t) {
-                Log.log("onFailure:", t.getMessage());
             }
         });
 
     }
 
-
     private void parse(String html) {
         Document doc = Jsoup.parseBodyFragment(html);
         Log.log("parse:", doc.body().toString());
     }
+
     private void testOnCreate() {
         Observable observable = Observable.create(new ObservableOnSubscribe<String>() {
             @Override
