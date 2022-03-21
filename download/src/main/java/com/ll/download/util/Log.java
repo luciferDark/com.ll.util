@@ -1,4 +1,4 @@
-package com.ll.utils;
+package com.ll.download.util;
 
 public class Log {
     public static void log(Object... msgs){

@@ -1,2 +1,4 @@
 rootProject.name = 'com.ll.util'
+include 'download'
+findProject(':download')?.name = 'com.ll.download'
 

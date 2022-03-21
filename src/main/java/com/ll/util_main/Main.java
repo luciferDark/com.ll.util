@@ -1,11 +1,12 @@
 package com.ll.util_main;
 
 import com.ll.util_main.test.RxTest;
+import com.ll.utils.Log;
 
 public class Main {
 
     public static void main(String[] args) {
-        log("main start");
+        Log.log("main start");
         test();
     }
 
@@ -14,10 +15,7 @@ public class Main {
         rxTest.init();
         rxTest.start();
 
-    }
 
-
-    public static void log(String logs) {
-        System.out.println(logs);
+        DownloadBean
     }
 }
