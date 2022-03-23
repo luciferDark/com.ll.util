@@ -39,5 +39,5 @@ dependencies {
     implementation 'com.lzy.net:okserver:2.0.5'
     implementation 'com.mickywu:filedownlibrary:1.0.0'
 
-    implementation project(':download')
+    implementation project(':com.ll.download')
 }

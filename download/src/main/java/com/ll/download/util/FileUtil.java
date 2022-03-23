@@ -14,8 +14,9 @@ public class FileUtil {
     public static void writeToDisk(ResponseBody response, DownloadBean bean) throws IOException {
         if (TextUtil.empty(bean.getDiskPath()) || TextUtil.empty(bean.getFileName()))
             return;
-
-        File fileDisk = new File(bean.getDiskFullPath());
+        String fullPath = bean.getDiskFullPath();
+        Log.log("write to disk ", bean.getUrl(), "into", fullPath);
+        File fileDisk = new File(fullPath);
         if (!fileDisk.getParentFile().exists()) {
             fileDisk.getParentFile().mkdirs();
         }

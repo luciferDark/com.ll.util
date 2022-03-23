@@ -1,10 +1,13 @@
 package com.ll.download;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.ll.download.apis.DownloadRetrofitApi;
 import com.ll.download.beans.DownloadBean;
 import com.ll.download.configs.DownloadError;
 import com.ll.download.configs.DownloadStatus;
 import com.ll.download.core.DownloadInterceptor;
+import com.ll.download.core.DownloadResponseBody;
 import com.ll.download.listener.DownloadListener;
 import com.ll.download.listener.DownloadLogListener;
 import com.ll.download.listener.DownloadProcessListener;
@@ -22,6 +25,7 @@ import okhttp3.ResponseBody;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -43,7 +47,7 @@ public class DownloadManager implements DownloadProcessListener {
         this.listener = listener;
         return this;
     }
-    public DownloadManager setListener(DownloadLogListener logListener) {
+    public DownloadManager setLogListener(DownloadLogListener logListener) {
         this.logListener = logListener;
         return this;
     }
@@ -94,10 +98,10 @@ public class DownloadManager implements DownloadProcessListener {
                 .readTimeout(5, TimeUnit.SECONDS)
                 .writeTimeout(5, TimeUnit.SECONDS)
                 .addInterceptor(interceptor);
-
+        Gson gson = new GsonBuilder().setLenient().create();
         Retrofit retrofit = new Retrofit.Builder()
                 .client(builder.build())
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
                 .baseUrl(UrlUtils.getBasUrl(downloadItem.getUrl()))
                 .build();
@@ -111,32 +115,31 @@ public class DownloadManager implements DownloadProcessListener {
 
     private void startDownload() {
         downloadRetrofitApi.download(
-                "bytes=" + downloadItem.getCurrentLength(),
                 downloadItem.getUrl())
-                .map(new Function<ResponseBody, DownloadBean>() {
-                    @Override
-                    public DownloadBean apply(ResponseBody responseBody) throws Throwable {
-                        downloadItem.setContentLength(responseBody.contentLength());
-                        FileUtil.writeToDisk(responseBody, downloadItem);
-                        return downloadItem;
-                    }
+                .map(responseBody -> {
+                    downloadItem.setContentLength(responseBody.contentLength());
+                    FileUtil.writeToDisk(responseBody, downloadItem);
+                    return downloadItem;
                 })
                 .subscribeWith(new Observer<DownloadBean>() {
                     @Override
                     public void onSubscribe(@NonNull Disposable d) {
+                        Log.log("onSubscribe");
                         disposable = d;
                         mDownloadStatus = DownloadStatus.START;
                     }
 
-                    @Override
-                    public void onNext(@NonNull DownloadBean downloadBean) {
 
+                    @Override
+                    public void onNext(@NonNull DownloadBean body) {
+                        Log.log("onNext");
                     }
 
                     @Override
                     public void onError(@NonNull Throwable e) {
+                        Log.log("onError", e.getLocalizedMessage());
                         mDownloadStatus = DownloadStatus.ERROR;
-                        onDownloadError(DownloadError.Error_DownLoadDuplicate,e.getLocalizedMessage());
+                        onDownloadError(mDownloadStatus,e.getLocalizedMessage());
 
                         if (disposable != null && !disposable.isDisposed()) {
                             disposable.dispose();
@@ -145,6 +148,7 @@ public class DownloadManager implements DownloadProcessListener {
 
                     @Override
                     public void onComplete() {
+                        Log.log("onComplete");
                         mDownloadStatus = DownloadStatus.COMPLETED;
                         downloadItem.setCompleted(true);
                         if (null != listener)listener.onCompleted(downloadItem);

@@ -2,6 +2,9 @@ package com.ll.download;
 
 import com.ll.download.beans.DownloadBean;
 import com.ll.download.configs.DownloadAction;
+import com.ll.download.listener.DownloadListener;
+import com.ll.download.listener.DownloadLogListener;
+import okhttp3.Interceptor;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +16,10 @@ public class DownLoadHelper {
 
     private String diskSavePath;
     private DownLoadHelper _instance;
+    private DownloadListener defaultDownLoadListener;
+    private DownloadListener downLoadListener;
+    private DownloadLogListener downloadLogListener;
+    private DownloadLogListener defaultDownloadLogListener;
 
     private int maxDownloadThread = 10;
     private int currentDownloadThread = 0;
@@ -34,10 +41,70 @@ public class DownLoadHelper {
         return _instance;
     }
 
+    public DownLoadHelper setDownLoadListener(DownloadListener downLoadListener) {
+        this.downLoadListener = downLoadListener;
+        return this;
+    }
+
+    public DownLoadHelper setDownloadLogListener(DownloadLogListener downloadLogListener) {
+        this.downloadLogListener = downloadLogListener;
+        return this;
+    }
 
     private void init() {
         downloadPond = new HashMap<>();
         waitingPond = new HashMap<>();
+
+        defaultDownLoadListener = new DownloadListener() {
+            @Override
+            public void onStart(DownloadBean item) {
+
+            }
+
+            @Override
+            public void onPause(DownloadBean item) {
+
+            }
+
+            @Override
+            public void onResume(DownloadBean item) {
+
+            }
+
+            @Override
+            public void onCompleted(DownloadBean item) {
+
+            }
+
+            @Override
+            public void onWaiting(DownloadBean item) {
+
+            }
+
+            @Override
+            public void onError(DownloadBean item, int errorCode, String msg) {
+
+            }
+
+            @Override
+            public void onDeleted(DownloadBean item) {
+
+            }
+
+            @Override
+            public void onProcess(DownloadBean item, long currentLength, long contentLength, boolean isCompleted, double speed) {
+
+            }
+        };
+        defaultDownloadLogListener = new DownloadLogListener() {
+            @Override
+            public void log(Interceptor.Chain chain) {
+
+            }
+        };
+
+        downLoadListener = defaultDownLoadListener;
+        downloadLogListener = defaultDownloadLogListener;
     }
 
     public DownLoadHelper setDiskSavePath(String diskSavePath) {
@@ -82,6 +149,20 @@ public class DownLoadHelper {
             waitPond(item);
             return;
         }
+        DownloadManager downloadManager = null;
+        if (downloadPond.containsKey(item.getUrl())){
+            downloadManager = downloadPond.get(item.getUrl());
+        } else {
+            downloadManager = new DownloadManager(item);
+            downloadPond.put(item.getUrl(),downloadManager);
+        }
+
+        downloadManager.setListener(downLoadListener);
+        downloadManager.setLogListener(downloadLogListener);
+
+        downloadManager.start();
+
+        currentDownloadThread ++;
     }
 
     private void waitPond(DownloadBean item) {
